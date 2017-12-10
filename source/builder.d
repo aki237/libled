@@ -29,6 +29,15 @@ AstType buildFrom(string[] tokens) {
       return buildIfAst(tokens);
     case InbuiltToken.WHILE:
       return buildWhileAst(tokens);
+    case InbuiltToken.CONTINUE:
+    case InbuiltToken.BREAK:
+      if (tokens.length >= 2) {
+        if (tokens.length > 2)
+          throw (new Exception("AST:Error : " ~ format("%s", x.value) ~ " cannot have an argument"));
+        if(tokens[1] != ";")
+          throw (new Exception("AST:Error : " ~ format("%s", x.value) ~ " cannot have an argument"));
+      }
+      break;
     default:
       break;
     }
