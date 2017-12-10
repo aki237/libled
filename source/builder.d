@@ -29,6 +29,13 @@ AstType buildFrom(string[] tokens) {
       return buildIfAst(tokens);
     case InbuiltToken.WHILE:
       return buildWhileAst(tokens);
+    case InbuiltToken.RETURN:
+      if (tokens.length > 1) {
+        x.extra = buildFrom(tokens[1..$-1]);
+      } else {
+        x.extra = new LedNullToken();
+      }
+      return x;
     case InbuiltToken.CONTINUE:
     case InbuiltToken.BREAK:
       if (tokens.length >= 2) {

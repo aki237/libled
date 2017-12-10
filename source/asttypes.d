@@ -105,7 +105,8 @@ public:
 class LedInbuiltToken : AstType {
 public:
   InbuiltToken value;
-
+  AstType      extra;
+  
   this(InbuiltToken v) {
     value = v;
   }

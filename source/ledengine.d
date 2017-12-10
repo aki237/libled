@@ -10,15 +10,26 @@ private import ast;
 private import builder;
 private import ledtypes;
 
+enum state
+  {
+   GOON,
+   CONTINUE,
+   BREAK,
+  };
+
 class Scope {
 public:
   Type[string] mem;
   Type function(Type[])[string] dfunctions;
   FunctionAst[string] lfunctions;
   Scope global;
-
+  state[] loopStack;
+  bool isReturned;
+  Type retval;
+  
   this() {
     global = null;
+    retval = new LedNull();
   }
 
   Type Eval(string contents) {
@@ -53,6 +64,10 @@ public:
         auto astlist = buildAstList(blocks[i]);
         foreach (f; astlist) {
           ret = Eval(f);
+          if (isReturned) {
+            writeln("Returned value : ", retval);
+            return retval;
+          }
         }
       } catch (Exception e) {
         writeln(e.msg);
@@ -222,15 +237,28 @@ public:
     if (conditionEval.getType() != LedType.BOOLEAN) {
       throw new Exception("LedEngineScope::ERROR : while expected an expression evaluating to a boolean value");
     }
-    while((cast(LedBoolean)(conditionEval)).value) {
-      foreach(exp; a.bodyStatements) {
+
+    loopStack ~= state.GOON;
+    int loopId = cast(int)(loopStack.length) - 1;
+
+    while((cast(LedBoolean)(conditionEval)).value && loopStack[loopId] != state.BREAK) {
+      foreach (exp; a.bodyStatements) {
         Eval(exp);
+        if (isReturned) {
+          writeln("Returned value : ", retval);
+          return retval;
+        }
+        if (loopStack[loopId] == state.CONTINUE) {
+          loopStack[loopId] = state.GOON;
+          break;
+        }
       }
       conditionEval = Eval(a.condition);
       if (conditionEval.getType() != LedType.BOOLEAN) {
         throw new Exception("LedEngineScope::ERROR : while expected an expression evaluating to a boolean value");
       }
     }
+    loopStack.popBack();
     return new LedNull();
   }
   
@@ -245,12 +273,20 @@ public:
       Type evalRet;
       foreach(ax; a.successClause) {
         evalRet = Eval(ax);
+        if (isReturned) {
+          writeln("Returned value : ", retval);
+          return retval;
+        }
       }
       return evalRet;
     }
     Type evalRet;
     foreach(ax; a.failureClause) {
       evalRet = Eval(ax);
+      if (isReturned) {
+        writeln("Returned value : ", retval);
+        return retval;
+      }
     }
     return evalRet;
   }
@@ -289,6 +325,10 @@ public:
   }
   
   Type Eval(AstType a) {
+    if (isReturned) {
+      writeln("Returned value : ", retval);
+      return retval;
+    }
     switch (a.getAstType()) {
     case LedAstType.EXPRESSION:
       return EvalExpression(a);
@@ -305,10 +345,35 @@ public:
     case LedAstType.SYMBOL:
       auto sym = (cast(LedSymbolToken)(a)).value;
       return handleSymbol(sym);
+    case LedAstType.INBUILT:
+      return handleInbuiltKeyword(cast(LedInbuiltToken)(a));
     default: return new LedNull();
     }
   }
 
+  Type handleInbuiltKeyword(LedInbuiltToken a) {
+    switch (a.value) {
+    case InbuiltToken.CONTINUE:
+      if(loopStack.length < 1) {
+        throw new Exception("LedEngineScope::ERROR : cannot 'continue' when not in a loop");
+      }
+      loopStack[$-1] = state.CONTINUE;
+      break;
+    case InbuiltToken.BREAK:
+      if(loopStack.length < 1) {
+        throw new Exception("LedEngineScope::ERROR : cannot 'break' when not in a loop");
+      }
+      loopStack[$-1] = state.BREAK;
+      break;
+    case InbuiltToken.RETURN:
+      retval = Eval(a.extra);
+      isReturned = true;
+      return retval;
+    default: break;
+    }
+    return new LedNull();
+  }
+  
   Type parseArray(string sym) {
     LedList ll = new LedList();
 
@@ -393,6 +458,9 @@ public:
 
     foreach(stmt; as.bodyStatements) {
       funcScope.Eval(stmt);
+      if (funcScope.isReturned) {
+        return funcScope.retval;
+      }
     }
     
     return new LedNull();
