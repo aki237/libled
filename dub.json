@@ -1,0 +1,10 @@
+{
+    "name": "led",
+    "version": "0.0.1",
+    "authors": [
+	"Akilan Elango"
+    ],
+    "description": "led scripting library for D",
+    "copyright": "Copyright © 2017, Akilan Elango",
+    "license": "gpl-3.0"
+}
