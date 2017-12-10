@@ -40,3 +40,13 @@ void main() {
 ```
 
 Compiling and running the above D program should print `5`.
+
+## Usage
+In your dub project add the dependency like this :
+
+```json
+"dependencies": {
+    "led": "~master"
+}
+```
+The version can be the one of the many found in the dlang package indexing website.
