@@ -391,14 +391,43 @@ public:
     }
     return ll;
   }
+
+  Type handleMethodCall(Type klass, string[] parts) {
+    if (parts.length < 1 || parts.length % 2 != 0 || parts[0] != ".")
+      throw new Exception("LedEngineScope::ERROR : not a valid method call for "
+                          ~ format("'%s' (%s) ", klass.getType(), klass) ~ ", call : " ~ format("%s", parts) 
+                          );
+    string funcName;
+    Type[] params = getFunctionParams(parts[1], funcName);
+
+    auto func = klass.getMethod(funcName);
+    if (func is null) {
+      throw new Exception("LedEngineScope::ERROR : method not defined for "
+                          ~ format("'%s' (%s) ", klass.getType(), klass) ~ ", call : " ~ format("%s", parts) 
+                          );
+    }
+
+    Type ret = func(params);
+    
+    if (parts.length > 2) {
+      return handleMethodCall(ret, parts[2..$]);
+    }
+    return ret;
+  }
   
   Type handleSymbol(string sym){
-    string[] ss = tokenizeSymbol(sym);
+    string[] ss = (new Tokenizer(sym)).tokenize(true);
     auto functionCall = regex("^[a-zA-Z_][a-zA-Z0-9]*\\(.*\\)$");
     auto listRep = regex("^\\[(\\s*.*,\\s*)+\\s*[[^,].*]\\s*\\]$");
-    if (ss.length != 1) {
-      throw new Exception("LedEngineScope::ERROR : method call not implemented yet. '" ~ sym ~ "'");
+    // Handling method call
+    if (ss.length > 1) {
+      if (ss.length % 2  != 1) {
+        throw new Exception("LedEngineScope::ERROR : not a valid method call");
+      }
+      auto klass = Eval(ss[0]);
+      return handleMethodCall(klass, ss[1..$]);
     }
+    
     if (ss[0].matchFirst(functionCall).empty) {
       if (!ss[0].matchFirst(listRep).empty) {
         return parseArray(ss[0]);

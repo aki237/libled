@@ -12,7 +12,10 @@ public:
     this.ops = "`!%^&*+-={}|',/<>;";
   }
     
-  string[] tokenize() {
+  string[] tokenize(bool incdot=false) {
+    if (incdot) {
+      this.ops ~= ".";
+    }
     string token = "", previous = "";
     string[] tokens = [];
     bool in_quotes = false;
@@ -102,6 +105,9 @@ public:
             tokens[$-1] ~= token;
             token = "";
             isFunctionCall = false;
+            continue;
+          }
+          if (i+1 < this.expression.length && this.expression[i+1] == '.' && !incdot) {
             continue;
           }
           tokens ~= token;
