@@ -20,7 +20,7 @@ This library is still in pre-pre-pre alpha state.
 ### Right now
  + simple expression : some operations are not implemented, function calls are done, but no method calls.
  + conditionals : `if .. else .. end` is done with returning value.
- + loops : `while .. end` is done but no support for control structures yet like `return`, `break` or `continue`.
+ + loops : `while .. end` is done.
  + functions : native functions and scripting funtions are done without control structures.
  + classes and objects : native classes can be added by just implementing the `Type` interface, and no led classes **yet**
  + imports : not yet...
