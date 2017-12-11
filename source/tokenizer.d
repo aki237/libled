@@ -188,7 +188,7 @@ private:
         norm ~= limit;
         current = "";
         break;
-      case "=+", "=!", "=-", ">+",">-", "<-", "<+":
+      case "=+", "=!", "=-", ">+",">-", "<-", "<+", ",-", ",+":
         norm ~= current;
         limit = "";
         if (i+1 >= tokens.length) {
