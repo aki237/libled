@@ -46,7 +46,7 @@ In your dub project add the dependency like this :
 
 ```json
 "dependencies": {
-    "led": "~master"
+    "libled": "~master"
 }
 ```
 The version can be the one of the many found in the dlang package indexing website.
