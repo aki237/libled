@@ -65,7 +65,6 @@ public:
         foreach (f; astlist) {
           ret = Eval(f);
           if (isReturned) {
-            writeln("Returned value : ", retval);
             return retval;
           }
         }
@@ -245,7 +244,6 @@ public:
       foreach (exp; a.bodyStatements) {
         Eval(exp);
         if (isReturned) {
-          writeln("Returned value : ", retval);
           return retval;
         }
         if (loopStack[loopId] == state.CONTINUE) {
@@ -274,7 +272,6 @@ public:
       foreach(ax; a.successClause) {
         evalRet = Eval(ax);
         if (isReturned) {
-          writeln("Returned value : ", retval);
           return retval;
         }
       }
@@ -284,7 +281,6 @@ public:
     foreach(ax; a.failureClause) {
       evalRet = Eval(ax);
       if (isReturned) {
-        writeln("Returned value : ", retval);
         return retval;
       }
     }
@@ -326,7 +322,6 @@ public:
   
   Type Eval(AstType a) {
     if (isReturned) {
-      writeln("Returned value : ", retval);
       return retval;
     }
     switch (a.getAstType()) {
