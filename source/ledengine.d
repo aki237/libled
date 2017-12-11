@@ -516,10 +516,4 @@ public:
     }
     return ret;
   }
-  
-}
-
-string[] tokenizeSymbol(string sym) {
-  // TODO : tokenize and return instead of blindly splitting at every "."
-  return sym.split(".");
 }
