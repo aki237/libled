@@ -1,19 +1,9 @@
 private import std.format;
 private import std.array;
 private import std.string;
-enum LedType
-  {
-   INTEGER,
-   FLOAT,
-   BOOLEAN,
-   STRING,
-   FUNCTION,
-   OBJECT,
-   NULL,
-  }
 
 interface Type {
-  LedType               getType();
+  string                getType();
   Type delegate(Type[]) getMethod(string);
   string                toString();
 }
@@ -34,8 +24,52 @@ public:
     value = v;
   }
   
-  LedType getType() {
-    return LedType.INTEGER;
+  string getType() {
+    return "int";
+  }
+
+  Type opBinary(string op) (Type x) {
+    auto numi = cast(LedInt)(x);
+    bool isFloat = false;
+    LedFloat numf;
+    if (numi is null) {
+      isFloat = true;
+      numf = cast(LedFloat)(x);
+      if (numf is null) {
+        throw new Exception("LedFloat : cannot add incompatible types : " ~ x.getType());
+      }
+    }
+    final switch (op) {
+    case "+":
+      if (isFloat)
+        return new LedFloat(value + numf.value);
+      else
+        return new LedInt(value + numi.value);
+    case "-":
+      if (isFloat)
+        return new LedFloat(value - numf.value);
+      else
+        return new LedInt(value - numi.value);
+    case "*":
+      if (isFloat)
+        return new LedFloat(value * numf.value);
+      else
+        return new LedInt(value * numi.value);
+    case "/":
+      if (isFloat)
+        return new LedFloat(value / numf.value);
+      else
+        return new LedInt(value / numi.value);
+    case "%":
+      if (isFloat)
+        return new LedFloat(value % numf.value);
+      else
+        return new LedInt(value % numi.value);
+    }
+  }
+  
+  static string type() {
+    return "int";
   }
 }
 
@@ -53,9 +87,53 @@ public:
   this(float v) {
     value = v;
   }
-  
-  LedType getType() {
-    return LedType.FLOAT;
+
+  LedFloat opBinary(string op) (Type x) {
+    auto numi = cast(LedInt)(x);
+    bool isFloat = false;
+    LedFloat numf;
+    if (numi is null) {
+      isFloat = true;
+      numf = cast(LedFloat)(x);
+      if (numf is null) {
+        throw new Exception("LedFloat : cannot add incompatible types : " ~ x.getType());
+      }
+    }
+    final switch (op) {
+    case "+":
+      if (isFloat)
+        return new LedFloat(value + numf.value);
+      else
+        return new LedFloat(value + float(numi.value));
+    case "-":
+      if (isFloat)
+        return new LedFloat(value - numf.value);
+      else
+        return new LedFloat(value - float(numi.value));
+    case "*":
+      if (isFloat)
+        return new LedFloat(value * numf.value);
+      else
+        return new LedFloat(value * float(numi.value));
+    case "/":
+      if (isFloat)
+        return new LedFloat(value / numf.value);
+      else
+        return new LedFloat(value / float(numi.value));
+    case "%":
+      if (isFloat)
+        return new LedFloat(value % numf.value);
+      else
+        return new LedFloat(value % float(numi.value));
+    }
+  }
+
+  string getType() {
+    return "float";
+  }
+
+  static string type() {
+    return "float";
   }
 }
 
@@ -104,9 +182,17 @@ public:
   this(string v) {
     value = v;
   }
+
+  LedString opBinary(string op) (LedString x) if(op == "+"){
+      return new LedString(value ~ x.value);
+  }
   
-  LedType getType() {
-    return LedType.STRING;
+  string getType() {
+    return "string";
+  }
+
+  static string type() {
+    return "string";
   }
 }
 
@@ -125,8 +211,12 @@ public:
     value = v;
   }
   
-  LedType getType() {
-    return LedType.BOOLEAN;
+  string getType() {
+    return "bool";
+  }
+
+  static string type() {
+    return "bool";
   }
 
 }
@@ -152,8 +242,12 @@ class LedList : Type {
     return null;
   }
   
-  LedType getType() {
-    return LedType.NULL;
+  string getType() {
+    return "list";
+  }
+
+  static string type() {
+    return "list";
   }
 }
 
@@ -168,7 +262,11 @@ class LedNull : Type {
     return null;
   }
   
-  LedType getType() {
-    return LedType.NULL;
+  string getType() {
+    return "null";
+  }
+
+  static string type() {
+    return "null";
   }
 }

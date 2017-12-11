@@ -79,16 +79,16 @@ public:
   Type gtInEquality(Type a, Type b) {
     auto lt = a.getType();
     auto rt = b.getType();
-    if (lt == LedType.STRING && rt == LedType.STRING) {
+    if (lt == LedString.type() && rt == LedString.type()) {
       return new LedBoolean(((cast(LedString)(a)).value > (cast(LedString)(b)).value));
     }
     float lnum, rnum;
 
     switch (a.getType()) {
-    case LedType.INTEGER:
+    case LedInt.type():
       lnum = float((cast(LedInt)(a)).value);
       break;
-    case LedType.FLOAT:
+    case LedFloat.type():
       lnum = (cast(LedFloat)(a)).value;
       break;
     default:
@@ -96,10 +96,10 @@ public:
     }
 
     switch (b.getType()) {
-    case LedType.INTEGER:
+    case LedInt.type():
       rnum = float((cast(LedInt)(b)).value);
       break;
-    case LedType.FLOAT:
+    case LedFloat.type():
       rnum = (cast(LedFloat)(b)).value;
       break;
     default:
@@ -113,86 +113,63 @@ public:
     auto lt = a.getType();
     auto rt = b.getType();
 
-    bool isFloat = (lt == LedType.FLOAT || rt == LedType.FLOAT);
-    float sum = 0;
     switch (lt) {
-    case LedType.INTEGER:
-      sum += (cast(LedInt)(a)).value;
-      break;
-    case LedType.FLOAT:
-      sum += (cast(LedFloat)(a)).value;
-      break;
+    case LedInt.type():
+      if (reciprocal)
+        return cast(LedInt)(a) / b;
+      return cast(LedInt)(a) * b;
+    case LedFloat.type():
+      if (reciprocal)
+        return cast(LedFloat)(a) / b;
+      return cast(LedFloat)(a) * b;
     default:
-      throw new Exception("LedEngineScope::ERROR : unable to add in compatible types : " ~ format("%s, %s", lt, rt));
+      throw new Exception("LedEngineScope::ERROR : unable to perform arithmetic in compatible types : " ~ format("%s, %s", lt, rt));
+    }
+  }
+
+  Type modulo(Type a, Type b) {
+    auto lt = a.getType();
+    auto rt = b.getType();
+
+    if ((lt != LedInt.type() && lt != LedFloat.type()) || (rt != LedInt.type() && rt != LedFloat.type())) {
+      throw new Exception(format("LedEngineScope::ERROR : cannot perform modulus for incompatible types : (%s, %s)", lt, rt));
     }
 
-    switch (rt) {
-    case LedType.INTEGER:
-      if (reciprocal) {
-        sum = sum / (cast(LedInt)(b)).value;
-      } else {
-        sum *= (cast(LedInt)(b)).value;
-      }
-      break;
-    case LedType.FLOAT:
-      if (reciprocal) {
-        sum = sum / (cast(LedFloat)(b)).value;
-      } else {
-        sum *= (cast(LedFloat)(b)).value;
-      }
-      break;
-    default:
-      throw new Exception("LedEngineScope::ERROR : unable to add in compatible types : " ~ format("%s, %s", lt, rt));
+    final switch (lt) {
+    case LedInt.type():
+      return cast(LedInt)(a) % b;
+    case LedFloat.type():
+      return cast(LedFloat)(a) % b;
     }
-
-    if (isFloat) {
-      return new LedFloat(sum);
-    }
-    return new LedInt(cast(int)(sum));
   }
   
   Type add(Type a, Type b, int factor) {
     auto lt = a.getType();
     auto rt = b.getType();
 
-      
-
-    if (lt == LedType.STRING && rt == LedType.STRING) {
+    if (lt == LedString.type() && rt == LedString.type()) {
       if (factor > 0) {
-        return new LedString((cast(LedString)(a)).value ~ (cast(LedString)(b)).value);
+        return (cast(LedString)(a)) + (cast(LedString)(b));
       } else {
         throw new Exception("LedEngineScope::ERROR : can only add or subtract 2 numeric values");
       }
     }
 
-    bool isFloat = (lt == LedType.FLOAT || rt == LedType.FLOAT);
     float sum = 0;
     switch (lt) {
-    case LedType.INTEGER:
-      sum += (cast(LedInt)(a)).value;
-      break;
-    case LedType.FLOAT:
-      sum += (cast(LedFloat)(a)).value;
-      break;
+    case LedInt.type():
+      if (factor < 0)
+        return (cast(LedInt)(a)) - b;
+      else
+        return (cast(LedInt)(a)) + b;
+    case LedFloat.type():
+      if (factor < 0)
+        return (cast(LedFloat)(a)) - b;
+      else
+        return (cast(LedFloat)(a)) + b;
     default:
       throw new Exception("LedEngineScope::ERROR : unable to perform arithmetic in compatible types : " ~ format("%s, %s", lt, rt));
     }
-
-    switch (rt) {
-    case LedType.INTEGER:
-      sum += factor*(cast(LedInt)(b)).value;
-      break;
-    case LedType.FLOAT:
-      sum += factor*(cast(LedFloat)(b)).value;
-      break;
-    default:
-      throw new Exception("LedEngineScope::ERROR : unable to perform arithmetic in compatible types : " ~ format("%s, %s", lt, rt));
-    }
-
-    if (isFloat) {
-      return new LedFloat(sum);
-    }
-    return new LedInt(cast(int)(sum));
   }
 
   Type EvalSimpleExpression(Ast a) {
@@ -205,11 +182,8 @@ public:
       return product(Eval(a.left), Eval(a.right),false);
     case "/":
       return product(Eval(a.left), Eval(a.right),true);
-      /*
-      Yet to implement the modulus.
-      case "%":
-        return;
-      */
+    case "%":
+      return modulo(Eval(a.left), Eval(a.right));
     case ">":
       return gtInEquality(Eval(a.left), Eval(a.right));
     case "<":
@@ -233,7 +207,7 @@ public:
 
   Type EvalWhileExpression(WhileAst a) {
     Type conditionEval = Eval(a.condition);
-    if (conditionEval.getType() != LedType.BOOLEAN) {
+    if (conditionEval.getType() != LedBoolean.type()) {
       throw new Exception("LedEngineScope::ERROR : while expected an expression evaluating to a boolean value");
     }
 
@@ -252,7 +226,7 @@ public:
         }
       }
       conditionEval = Eval(a.condition);
-      if (conditionEval.getType() != LedType.BOOLEAN) {
+      if (conditionEval.getType() != LedBoolean.type()) {
         throw new Exception("LedEngineScope::ERROR : while expected an expression evaluating to a boolean value");
       }
     }
@@ -262,7 +236,7 @@ public:
   
   Type EvalIfExpression(IfAst a) {
     Type conditionEval = Eval(a.condition);
-    if (conditionEval.getType() != LedType.BOOLEAN)
+    if (conditionEval.getType() != LedBoolean.type())
       throw new Exception("LedEngineScope::ERROR : if expected an expression evaluating to a boolean value");
 
     bool evalValue = (cast(LedBoolean)(conditionEval)).value;
