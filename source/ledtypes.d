@@ -79,11 +79,12 @@ public:
       throw new Exception("string : replace method requires 3 arguments : (STRING, STRING, INT), got : " ~
                           format("(%s, %s, %s)", args[0].getType(), args[1].getType(), args[2].getType()));
     }
-    int i = 0;
-    string temp = "";
+    int i = 1;
+    string temp = value;
     while (i <= times.value || times.value < 0) {
-      temp = value.replaceFirst(oldStr.value, newStr.value);
-      if (temp == value) {
+      string old = temp;
+      temp = temp.replaceFirst(oldStr.value, newStr.value);
+      if (temp == old) {
         break;
       }
       i++;
